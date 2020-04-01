@@ -1,0 +1,118 @@
+#算法实现
+            from numpy import *
+            import operator
+            from os import listdir
+            import numpy as np
+            class Bayes():
+                def __init__(self):
+                    self.length=-1 #判断是否进行了训练，-1代表未训练
+                    self.labelcount=dict() #存储类别
+                    self.vectorcount=dict()
+                def fit(self,trainSet:list,labels:list):#表明数据类型为list
+                    if(len(trainSet[0]!=len(labels))):
+                        raise ValueError("the length of the train array didn't mathch to the labels")
+                    self.length=len(trainSet[0])#训练数据特征值的长度
+                    lables_sum=len(labels)#类别所有的数量
+                    no_repeat_labels=set(labels)#不重复类别的数量
+                    for item in no_repeat_labels:
+                        thislabel=item
+                        self.labelcount[thislabel]=labels.count(thislabel)/lables_sum#当前类别占所有类别的比例
+                    for vector,label in zip(trainSet,labels):
+                        if(label not in self.vectorcount):
+                            self.vectorcount[label]=[]#初始化
+                        self.vectorcount[label].append(vector)
+                    print("the traning is over")
+                    return self
+                def btest(self,TestData,LabelSet):
+                    if(self.length==-1):
+                        print("you haven't yet training the data,please train first")
+                    #计算testdata分别为各个类别的概率
+                    IbDict=dict()
+                    for thisIb in LabelSet:
+                        p=1#初始化概率
+                        alllabel=self.labelcount[thisIb]#计算比例
+                        allvector=self.vectorcount[thisIb]
+                        vnum=len(allvector)
+                        allvector=array(allvector).T
+                        for index in range(0,len(TestData)):
+                            vector=list(allvector[index])
+                            p*=vector.count(TestData[index])/vnum
+                        IbDict[thisIb]=p*alllabel
+                    thislabel=sorted(IbDict,key=lambda x:IbDict[x],reverse=True)[0]
+                    return thislabel
+        #贝叶斯算法实现手写体数字识别
+            #图片转换为文本
+                from PIL import Image
+                img=Image.open("G:/PM/data_analyse/testdata/7.png")
+                img_to_txt=open("G:/PM/data_analyse/testdata/7.txt","a")
+                #img.save("G:/PM/netcrawler_learning/7.png")#保存图片
+                width=img.size[0]
+                height=img.size[1]
+                #k=img.getpixel((1,9))#获取像素点（1，9）的颜色
+                #RGB：(0,0,0)black;(255,255,255)white
+                #print(k)
+                for i in range(0,height):#高在外层循环
+                    for j in range(0,width):
+                        clor=img.getpixel((j,i))#注意genpixel参数顺序与循环的匹配(宽，高)
+                        clorall=clor[0]+clor[1]+clor[2]
+                        if clorall==0:
+                            img_to_txt.write("1")#若为黑色，写入1
+                        else:
+                            img_to_txt.write("0")
+                    img_to_txt.write("\n")#换行
+                img_to_txt.close()
+            #加载数据
+                def data_to_array(filename):
+                    arr=[]
+                    fh=open(filename)
+                    for i in range(0,height):
+                        thisline=fh.readline()
+                        for j in range(0,width):
+                            arr.append(int(thisline[j]))#int(thisline[j])强制转化成int型
+                    return arr
+            #去文件名前缀
+                def seplables(filename):
+                    filestr=filename.split(".")[0]#取前半部分内容
+                    file_label=int(filestr.split("_")[0])
+                    return file_label
+            #建立训练数据
+                def traindata():
+                    labels=[]
+                    train_file_list=listdir("G:/PM/data_analyse/traindata")#os下的listdir()得到一个文件夹下的所有文件名
+                    train_file_count=len(train_file_list)
+                    #数据转化为数组后，长度为宽*高
+                    #将所有的测试文件用数组保存，行：测试文件总数；列：宽*高
+                    trainarr=np.zeros((train_file_count,width*height))#使用numpy下的zeros方法生成二维数组
+                    for i in range(0,train_file_count):
+                        thisfile=train_file_list[i]#得到文件名
+                        thislabel=seplables(thisfile)#分割文件名得到数字名
+                        labels.append(thislabel)
+                        trainarr[i,:]=data_to_array("./thisfile")#相应文件转化为数组保存到训练数组中[i,:]保证数据不会串行
+                    return trainarr,labels
+            #进行贝叶斯训练
+                bys=Bayes()
+                traindata,labels=traindata()
+                bys.fit(traindata,labels)
+            #开始测试
+                data_for_test=data_to_array("./test.txt")
+                labelsall=[0,1,2,3,4,5,6,7,8,9]
+            #识别单个手写体字
+                '''
+                rst=bys.btest(data_for_test,labelsall)
+                print(rst)
+                '''
+            #识别多个手写体字
+                testfile=listdir("G:/PM/data_analyse/testdata")
+                num=len(testfile)
+                for i in range(0,num):
+                    thisfilename=testfile[i]
+                    thislabel=seplables(thisfilename)
+                    thisdataarray=data_to_array("G:/PM/data_analyse/testdata"+thisfilename)
+                    label=bys.btest(thisdataarray,labelsall)
+                    print("the digital is"+str(thislabel)+",the recognised digital is:"+str(label))
+                    x=0
+                    if(label!=thislabel):
+                        x+=1
+            #计算错误率
+                fault_ratio=x/num
+                print("the fault ratio is:",fault_ratio)
