@@ -1,0 +1,117 @@
+#数据转换
+        #数据转换概述
+            1.简单变换
+            目的是将数据转换为更方便分析的数据；
+            简单变换通常使用函数变换的方式进行，常见的函数变换包括：开方、平方、对数等。
+            2.数据的规范化
+            a.离差标准化（最大值与最小值之比）--消除量纲（单位）影响以及变异大小因素的影响（也叫最小-最大标准化）
+            x1=(x-min)/(max-min)
+            b.标准差标准化--消除单位影响以及变量自身变异影响(也叫零-均值标准化)
+            x1=(x-平均数)/标准差
+            标准差标准化之后的数平均数为0，标准差是1
+            c.小数定标规范化--消除单位影响
+            x1=x/10**(k)
+            k=log10(x的绝对值的最大值)
+            3.离散化（将数据离散成间断的点）
+            a.等宽离散法：等距区间或自定义区间进行离散，有点是灵活，保持原有数据分布
+            b.等频离散法：根据数据的频率分布进行排序，然后按照频率进行离散，好处是数据变为均匀分布，但是会更改原有的数据结构
+            c.聚类离散法：使用k-means将样本进行离散处理
+            e.分位数法：使用四分位、五分位、十分位等进行离散
+            f.卡方：通过使用基于卡方的离散方法，找出数据的最佳临近区间并合并，形成较大的区间
+            g.二值化：数据跟阈值比较，大于阈值设置为某一固定值（例如1），小于设置为另一值（例如0），然后得到一个只拥有两个值域的二值化数据集。
+            4.属性构造
+            根据原有的属性构造新的属性
+        #数据规范化
+            import pymysql
+            import pandas as pda
+            import numpy as np
+            conn=pymysql.connect(host="localhost",user="root",passwd="qwezxc8520963",db="taobao")
+            sql="select price,comment from snacks"
+            data=pda.read_sql(sql,conn)
+            print(data.describe())
+            #离差标准化x1=(x-min)/(max-min)
+            data2=(data-data.min)/(data.max()-data.min())
+            #标准差标准化x1=(x-平均数)/标准差 
+            data3=(data-data.mean())/data.std()#data.std()标准差
+            #小数定标规范化
+            k=np.ceil(np.log10(data.abs().max()))#abs()绝对值ceil()近1取整法
+            data4=data/10**k
+
+        #离散化
+            #等宽离散化
+            data5=data[u"price"].copy()#对相关的数据进行编码“u”，copy一份数据
+            data5=data5.T
+            data5=data5.values
+            k=[0,100,400,1000,data5.max()]
+            c1=pda.cut(data5,4,labels=["便宜","适中","稍贵","天价"])#4为4等分，labels为4份数据的标签名字
+            c2=pda.cut(data5,k,labels=["便宜","适中","稍贵","天价"])
+            '''
+            >>> abc=[1,5,15,45,12,34,9,15]
+            >>> pandas.cut(abc,3,labels=["便宜","适中","昂贵"])
+            [便宜, 便宜, 便宜, 昂贵, 便宜, 昂贵, 便宜, 便宜]
+            Categories (3, object): [便宜 < 适中 < 昂贵]
+            #分段可以以数组形式展开，分为三段
+            >>> pandas.cut(abc,[0,10,20,40])
+            [(0.0, 10.0], (0.0, 10.0], (10.0, 20.0], NaN, (10.0, 20.0], (20.0, 40.0], (0.0, 10.0], (10.0, 20.0]]
+            Categories (3, interval[int64]): [(0, 10] < (10, 20] < (20, 40]]
+            #可以看到，分成了三个区间，区间呈左开右闭形状
+            >>> pandas.cut(abc,[0,10,20,40],labels=["便宜","适中","昂贵"])
+            [便宜, 便宜, 适中, NaN, 适中, 昂贵, 便宜, 适中]
+            Categories (3, object): [便宜 < 适中 < 昂贵]
+            '''
+        #属性构造
+            price_ratio=data[u"comment"]/data["price"]
+            data[u'价评比']=price_ratio
+            data.describe()#价评比加入到数据中
+            file="./price.xls"
+            data.to_excel(file,index=False)#数据写入excel文件中
+    #数据规约
+        #属性规约-主成分分析：PCA算法
+            相关属性进行降维处理，减少属性。可以理解为一种映射关系，如Z＝F(x,y)，由二维降为一维。
+            主要的降维方法由：SVD奇异值分解，PCA主成分分析，FA因子分析，ICA独立成分分析等。
+            主成分分析：PCA算法
+            主成分分析是设法将原来众多具有一定相关性（比如P个指标），重新组合成一组新的互相无关的综合指标来代替原来的指标。
+            通常数学上的处理就是将原来P个指标作线性组合，作为新的综合指标。
+            最经典的做法就是用F1（选取的第一个线性组合，即第一个综合指标）的方差来表达，即Var(F1)越大，表示F1包含的信息越多。
+            因此在所有的线性组合中选取的F1应该是方差最大的，故称F1为第一主成分。如果第一主成分不足以代表原来P个指标的信息，
+            再考虑选取F2即选第二个线性组合，为了有效地反映原来信息，F1已有的信息就不需要再出现在F2中，
+            用数学语言表达就是要求Cov(F1, F2)=0，则称F2为第二主成分，依此类推可以构造出第三、第四，……，第P个主成分
+            PCA的思想是将N维特征映射到K维上，这K维是全新的正交特征，称为主元。在PCA中，数据从原来的坐标系转换到新的坐标系下，新的坐标系
+            的选择与数据本身是密切相关的。其中，第一个新坐标轴选择的是原始数据中方差最大的方向，第二个新坐标轴是与第一个坐标轴正交且具有
+            最大方差的方向，一次类推，得到K个坐标轴。
+            流程：
+            1.去平均值，即每一位特征减去各自的平均值
+            2.计算协方差矩阵，可检查各个特征之间的相关性
+            3.计算协方差矩阵的特征与特征向量
+            4.对特征值从大到小排序
+            5.保留最大的k个特征向量
+            6.将数据转换到k个特征向量构建的新空间中
+            from sklearn.decomposition import PCA
+            import pymysql
+            import pandas as pda
+            import numpy as np
+            conn=pymysql.connect(host="localhost",user="root",passwd="qwezxc8520963",db="taobao")
+            sql="select price,comment from snacks"
+            data=pda.read_sql(sql,conn)
+            print(data.describe())
+            #---主成分分析进行中---
+            pcal=PCA()
+            pcal.fit(data)#处理加载数据
+            tzl=pcal.components_#返回模型中的各个特征的特征向量
+            #各个主成分中各自方差的百分比（贡献率）
+            ratio=pcal.explained_variance_ratio_
+            #降维处理
+            pca2=PCA(2)
+            pca2.fit(data)
+            reduction=pca2.transform(data)#降维
+            back_to_origin=pca2.inverse_transform(reduction)#恢复原形状
+        #数值规约
+            通过选择替代的、较小的数据表示形式来减少数据量
+            有参方法：使用一个参数模型估计数据，最后只要存储参数即可。 
+            线性回归方法 
+            多元回归 
+            对数线性模型：近似离散的多维数据概率分布
+            无参方法 
+            直方图。如一连串的数据，通过绘制直方图（R中用hist()函数绘制直方图），分为“3~15”、“16~28”、“29~41”三个范围。
+            聚类。将对象划分为簇，使一个簇中的对象相互“相似”，而与其他簇中的对象“相异”，用数据的簇替换实际数据。
+            抽样。R实现：newD = D[sample(N,s,replace=T/F),]
