@@ -1,0 +1,70 @@
+#数据特征分析
+        极差：最大值-最小值
+        组距：极差/组数
+        import pymysql
+        import numpy as np
+        import pandas as pda
+        import matplotlib.pylab as pyl
+        conn=pymysql.connect(host='localhost',user='root',passwd='qwezxc8520963',db='snacks')
+        sql="select * from snacks"
+        data=pda.read_sql(sql,conn)
+        print(data.describe())
+        #发现缺失值
+        data["price"][(data["price"]==0)]=None#将所有价格为0的数据设置为空值None
+        x=0#记录设置为中位数的数据条数
+        for i in data.columns:#获取所有表头名然后遍历
+            for j in range(len(data)):
+                if (data[i].isnull())[j]: #如果为空即插值。  
+                    data[i][j]="36"#将值为null的数据设置为数据的中位数36
+                    x+=1
+        print(x)
+        #异常值处理
+        #画散点图（横轴为价格，纵轴为评论数）
+        #价格
+        data2=data.T
+        data2=data2.sort(data2[2])
+        price=data2.values[2]
+        #评论数
+        comment=data2.values[3]
+        pyl.plot(price,comment,'o')
+        pyl.show()
+        #评论数异常>200000,价格异常>2000
+        line=len(data.values)
+        col=len(data.values[0])
+        da=data.values
+        for i in range(0,line):
+            for j in range(0,col):
+                if(da[i][2]>2000):#价格异常
+                    print(da[i][j])#查看异常数据
+                    da[i][2]=36#中位数更为合适
+                if(da[i][3]>200000):
+                    print(da[i][j])
+                    da[i][3]=58
+
+        #数据分布探索
+        price_max=data.values[2].max()
+        price_min=data.values[2].min()
+        comment_max=data.values[3].max()
+        comment_min=data.values[3].min()
+        #价格极差
+        pricerg=price_max-price_min
+        #评论极差
+        commentrg=comment_max-comment_min
+        #组距
+        pricedst=pricerg/12
+        commentdst=commentrg/12
+        #画价格的直方图
+        pyl.subplot(2,1,1)
+        pricesty=np.arange(price_min,price_max,pricedst)
+        pyl.title("价格")#图表标题
+        pyl.xlabel("价格")#x轴名称
+        pyl.ylabel("计数")
+        pyl.hist(data[2],pricedst)
+        #画评论的折线图
+        pyl.subplot(2,1,2)
+        commentty=np.arange(comment_min,comment_max,commentdst)
+        pyl.hist(data[2],commentdst)
+        pyl.title("评论")#图表标题
+        pyl.xlabel("评论数")#x轴名称
+        pyl.ylabel("计数")
+        pyl.show()
