@@ -1,0 +1,79 @@
+    #分词-jieba
+        #概述
+            在jieba中，有一个dict.txt,包含了许多的词汇
+            如B超 3 n 分别代表：词名，词频，词性
+            a:形容词，c:连词，d:副词，e:叹词，f:方位词，i:成语，m:数词，n:名词，nr:人名，ns:地名，nt:机构团体，nz:其他专有名词
+            p:介词，r:代词，t:时间，u:助词，v:动词，vn:动名词，w:标点符号,un：未知词语
+        #jieba.cut方法
+            import jieba
+            sentence="我喜欢上海东风明珠"
+            words=jieba.cut(sentence,cut_all=True)#(分词数据，分词模式)；分词模式参数省略则为精准模式
+            #生成之后循环输出
+            for i in words:
+                print(i)
+            #全模式cut_all=True下输出
+
+            print("")
+            #精准模式cut_all=False下输出
+            words2=jieba.cut(sentence,cut_all=False)
+            for item in words2:
+                print(item)
+            print("")
+
+            #搜索引擎式分词
+            words3=jieba.cut_for_search(sentence)
+            for i in words3:
+                print(i)
+        #词性标注jieba.posseg
+            import jieba.posseg#导入词性标注模块
+            words4=jieba.posseg.cut(sentence)
+            #.flag词性
+            #.word词语
+            for item in words4:
+                print(item.word+"----"+item.flag)
+        #加载用户创建词典jieba.load_userdict
+            jieba.load_userdict("C:/Users/12871/AppData/Local/Programs/Python/Python37/Lib/site-packages/jieba/dict2.txt")
+            sentence2="鼎兴科创是一个好公司"
+            words5=jieba.cut(sentence2)
+            words6=jieba.posseg.cut(sentence2)
+            for i in words5:
+                print(i)
+            for item in words6:
+                print(item.word+"----"+item.flag)
+        #更改词频jieba.add_word
+            sentence3="李煜是唐朝的一位诗人，云计算很火"
+            words7=jieba.cut(sentence3)
+            for i in words7:
+                print(i)
+            print("")
+            jieba.add_word("云计算")#添加"云计算"到字典中
+        #提取关键词jieba.analyse.extract_tags
+            import jieba.analyse
+            tag=jieba.analyse.extract_tags(sentence3,3)#提取词频前3的关键词
+            print("tag is",tag)
+        #返回词语的位置jieba.tokenize
+            position=jieba.tokenize(sentence3)
+            for item in position:
+                print(item)
+            #以搜索引擎的方式返回词语的位置
+            position2=jieba.tokenize(sentence3,mode='search')
+            for i in position2:
+                print(i)
+        #盗墓笔记关键词提取
+            data=open("G:/PM/netcrawler_learning/data_anlysis_materials/liujiao.txt",encoding="utf-8").read()
+            tags=jieba.analyse.extract_tags(data,25)
+            print("盗墓笔记关键词提取")
+            for i in tags:
+                print(i)
+            有时会遇到无法解码的问题，可以转化成html格式进行显示
+            '
+            html
+            body
+            text
+            /body
+            /html
+            '
+            import urllib.request
+            data=urllib.request.urlopen("http://127.0.0.1/dmbj.html").read().decode("utf-8")
+            tag=jieba.analyse.extract_tags(data,20)
+            print(tag)
