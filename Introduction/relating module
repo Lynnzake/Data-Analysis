@@ -1,0 +1,112 @@
+#相关模块使用（numpy,matpotlib,pandas等）
+    #numpy
+        import numpy as np
+        #创建一维数组
+        #numpy.array(元素1,元素2，元素3)
+        a=np.array(1,2,3,9)
+        #创建二维数组
+        #numpy.array([[],[],[],[],.....[]])
+        d=np.array([2,5,6],[3,7,9],[0,2,4])
+        print(a[1])
+        #取二维数组中的9.“1”代表第一维数据中的[3,7,9]；“2”代表第二位数据中的9
+        print(d[1][2])
+        #排序sort()
+        x=x.sort()
+        y=y.sort()
+        #取最大值max(),最小值min()
+        ymax=y.max()
+        ymin=y.min()
+        #切片：按照下标取某一段的元素
+        #数组[起始下标:最终下标+1]，左边不写则从最开始的元素开始，右边不写则到最后的元素
+        xslice=x[1,3]#取数组下标为1，2的元素,即数字2和3
+    #pandas
+        import pandas
+        Series:代表一串数据 #index：索引
+        DataFrame:数据框，类似表格
+        #一维数据
+        pa=pandas.Series([8,9,3,4])
+        pa_index=["one","two","3","four"]
+        #二维数据
+        pd=pandas.DataFrame([[2,3,5,7],[9,5,7,2],[4,7,0,3]])
+        #指定列名
+        pd.columns=["c1","c2","c3","c4"]
+        #指定行名
+        pd.index=["r1","r2","r3"]
+        pdict=pandas.DataFrame({
+            "columns1":4,#第一列自动填充4
+            "columns2":['a','b','e','y'],
+            "columns3":list(str(4786))
+        })
+        #头部数据，默认显示前5行数据pd_head
+        pd_head=pd.head()
+        #取数据的前2行
+        pd_3=pd.head(2)
+        #尾部数据，默认后5行
+        pd_tail=pd.tail()
+        #取数据的最后两行
+        pd_tail2=pd.tail(2)
+        #数据的统计信息（按列统计）.如最小值，最大值(max)，平均数(mean)，标准差(std),75%(分位数，如50%为中位数）等
+        p_desscibe=pdict.describe()
+        #转置
+        pdict_t=pdict.T
+    #pandas导入数据
+        #导入csv数据
+            import pandas as pda
+            i=pda.read_csv("C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/dangdang.csv",encoding='gbk',error_bad_lines=False)
+            #mysql导出时设置为gbk，此处也应设置为gbk;为忽略一些错误信息行，使用error_bad_lines=False进行清洗
+            print(i.describe())#展示含数据的列的统计信息
+            print(i.sort_values(by="comments"))#数据按照评论数进行排序
+
+        #导入excel数据
+            #j=pda.read_excel(":/ProgramData/MySQL/MySQL Server 8.0/Uploads/dangdang.xlsx")
+
+        #导入数据库里的数据
+            import pymysql
+            conn=pymysql.connect(host="localhost",user="root",passwd="qwezxc8520963?",db="dangdang")
+            sql="select * from books"
+            k=pda.read_sql(sql,conn)
+
+        #导入html数据
+            #仅读取网页中的表格table
+            h=pda.read_html("http://book.douban.com")
+
+        #导入txt数据
+            #出现无法解码的情况，可在字段中添加encoding
+            t=pda.read_table("G:/PM/netcrawler_learning/file.txt",encoding='gbk')
+    #数据可视化-matpoltlib
+        #折线图/散点图
+            x2=[4,6,9,12,17,20]
+            y2=[5,8,10,16,20,24]
+            pyl.plot(x,y,'d')#细长菱形散点图
+            pyl.plot(x2,y2,'or')#红色散点图
+            pyl.plot(x,y,':')#点虚线显示
+            pyl.title("show")#图表标题
+            pyl.xlabel("ages")#x轴名称
+            pyl.ylabel("grade")
+            pyl.xlim(0,25)#x轴的显示范围
+            pyl.ylim(2,30)
+            #点的样式
+            s-方形 h-六角形 H-六角形 *-星形 +-加形 x-x形 d-细长菱形 D-正常菱形 p-五角形
+            #线条样式
+            - 直线  --虚线 -.  :点虚线
+            #点的颜色
+            r-red-红色c-cyan-青色m-magente-品红g-green-绿b-blue y-yellow b-black w-white
+        #随机数的生成
+            ranData=np.random.random_integers(0,10,20)#为整型数(最小值，最大值，个数)
+            normalData=np.random.normal(2,0.4,20)#生成正态分布的随机数(平均数μ，方差σ，个数)
+        #直方图
+            normalData=np.random.normal(8,2,1000)#生成正态分布的随机数(平均数μ，方差σ，个数)
+            pace=np.arange(2,17,3)#为直方图设置宽度，上限和下限
+            pyl.hist(normalData,pace,histtype='stepfilled')#指定宽度，取消边框
+            pyl.show()#多个图会叠加起来展现
+        #一张图显示多个图表
+            pyl.subplot(2,2,1)#（行，列，所处区域）
+            normalData=np.random.normal(8,2,1000)#生成正态分布的随机数(平均数μ，方差σ，个数)
+            pace=np.arange(2,17,3)#为直方图设置宽度，上限和下限
+            pyl.hist(normalData,pace,histtype='stepfilled')#指定宽度，取消边框
+
+            pyl.subplot(2,1,2)
+            x=[1,3,6,7,9]
+            y=[2,5,9,7,8]
+            pyl.plot(x,y,'y')#散点图，黄色
+            pyl.show()
