@@ -1,0 +1,83 @@
+#文本相似度分析-TFIDF ALGORITHM
+        #TFIDF概述
+            我们可能发现"中国"、"蜜蜂"、"养殖"这三个词的出现次数一样多。这是不是意味着，作为关键词，它们的重要性是一样的？
+            显然不是这样。因为"中国"是很常见的词，相对而言，"蜜蜂"和"养殖"不那么常见。如果这三个词在一篇文章的出现次数一样多，
+            有理由认为，"蜜蜂"和"养殖"的重要程度要大于"中国"，也就是说，在关键词排序上面，"蜜蜂"和"养殖"应该排在"中国"的前面。
+            所以，我们需要一个重要性调整系数，衡量一个词是不是常见词。如果某个词比较少见，但是它在这篇文章中多次出现，那么它很
+            可能就反映了这篇文章的特性，正是我们所需要的关键词。
+            用统计学语言表达，就是在词频的基础上，要对每个词分配一个"重要性"权重。最常见的词（"的"、"是"、"在"）给予最小的权重，
+            较常见的词（"中国"）给予较小的权重，较少见的词（"蜜蜂"、"养殖"）给予较大的权重。这个权重叫做"逆文档频率"
+            （Inverse Document Frequency，缩写为IDF），它的大小与一个词的常见程度成反比。
+            知道了"词频"（TF）和"逆文档频率"（IDF）以后，将这两个值相乘，就得到了一个词的TF-IDF值。
+            某个词对文章的重要性越高，它的TF-IDF值就越大。所以，排在最前面的几个词，就是这篇文章的关键词。
+            TF=某个词在文章中出现的次数/文章的总次数
+            IDF=log(语料库的文档总数/(包含该词的文档书数+1))
+            TFIDF=TF*IDF
+
+            关于gensim
+            dictionary=corpora.Dictionary(texts).这个语句很常见，texts就是若干个被拆成单词集合的文档的集合，而dictionary就是把
+            所有单词取一个set()，并对set中的每个单词分配一个id的map.
+            dictionary.doc2bow(doc)是把文档doc变成一个稀疏向量
+            密集向量的值就是一个普通的Double数组 而稀疏向量由两个并列的 数组indices和values组成 
+            稀疏向量通常用两部分表示：一部分是顺序向量，另一部分是值向量。例如稀疏向量(4，0，28，53，0，0，4，8)可用
+            值向量(4，28，53，4，8)和顺序向量(1，0，1，1，0，0，1，1)表示。
+
+        #TFIDF应用
+            from gensim import corpora,models,similarities
+            import jieba
+            from collections import defaultdict#计算词频
+            #读取文档
+                doc1="G:/PM/netcrawler_learning/data_anlysis_materials/daomubiji.txt"
+                doc2="G:/PM/netcrawler_learning/data_anlysis_materials/liujiao.txt"
+                read1=open(doc1,encoding="utf-8").read()
+                read2=open(doc2,encoding="utf-8").read()
+            #对要计算的文档进行分词
+                data1=jieba.cut(read1)
+                data2=jieba.cut(read2)
+            #对文档进行整理成指定格式，方便后续计算
+                #'''整理为 词语1 词语2 词语3……词语n'''
+                data_organized1=""
+                data_organized2=""
+                for item in data1:
+                    data_organized1+=item+" "
+                for item in data2:
+                    data_organized2+=item+" "
+                documents=[data_organized1,data_organized2]#将分析的文档数据放到一个记录中
+                texts=[[word for word in document.split()] for document in documents]
+                '''
+                将一个个词素分解成列表形式存放.此类循坏从右往左看，最外层是for document in documents
+                第二层是for word in document.split()然后把值赋给word
+                当赋值word没有定义时，其必须与循环内word 相同
+                若word已定义，则可以写成word for i in document.split()
+                '''
+            #计算出词语的频率
+                frequency=defaultdict(int)#创建一个类型为int型的defaultdict的实例
+                for text in texts:
+                    for token in text:
+                        frequency[token]+=1
+                #print(frequency)
+            #【可选】对频率低的词语进行过滤
+                text_filtered=[[word for word in text if frequency[token]>1] for text in texts]#过滤词频小于4的词语
+            #通过语料库建立词典
+                dictionary=corpora.Dictionary(text_filtered)
+                dictionary.save("G:/PM/netcrawler_learning/data_anlysis_materials/dictionary.txt")#保存词典以后使用
+            #加载要对比的文档
+                doc3="G:/PM/netcrawler_learning/data_anlysis_materials/comparison.txt"
+                read3=open(doc3,encoding="utf-8").read()
+                data3=jieba.cut(read3)
+                data_organized3=""
+                for item in data3:
+                    data_organized3+=item+" "
+            #将要对比的文档通过doc2bow转化为稀疏向量
+                vector=dictionary.doc2bow(data_organized3.split())#转化成稀疏向量，去掉空格
+            #处理doc1,doc2稀疏向量，得到新语料库
+                new_copora=[dictionary.doc2bow(text) for text in texts]
+            #通过TFIDF模型处理新语料库，得到TFIDF
+                tfidf=models.TfidfModel(new_copora)
+            #通过token2id得到特征值
+                feature_num=len(dictionary.token2id.keys())
+            #稀疏矩阵相似度，从而建立索引
+                index=similarities.SparseMatrixSimilarity(tfidf[new_copora],num_features=feature_num)
+            #得到最终相似度结果
+                sim=index[tfidf[vector]]
+                print("相似度是",sim)
