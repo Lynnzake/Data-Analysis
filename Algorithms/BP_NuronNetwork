@@ -1,0 +1,53 @@
+#BP人工神经网络应用
+            #1.读取数据
+                import pandas as pda
+                import numpy as np
+                filename="G:/PM/data_analyse/data_anlysis_materials/decisiontree.xlsx"
+                dataframe=pda.read_excel(filename,encoding="utf-8")
+                x=dataframe.iloc[:,2:6].values#提取第三到第五列数据,并转化为数组values才能进行后续的处理
+                y=dataframe.iloc[:,6:].values#提取第六列数据
+                for i in range(0,len(x)):
+                    for j in range(0,len(x[i])):
+                        thisdata=x[i][j]
+                        if(thisdata=="中年"or thisdata=="青年"or thisdata=="高"or thisdata=="是"or thisdata=="优"):
+                            x[i][j]=int(1)
+                        else:
+                            x[i][j]=int(-1)
+                for i in range(0,len(y)):
+                    thisdata=y[i]
+                    if(thisdata=="买"):
+                        y[i]=int(1)
+                    else:
+                        y[i]=int(0)
+                x_trans=pda.DataFrame(x)
+                y_trans=pda.DataFrame(y)
+                x_to_matrix=x_trans.values.astype(int)#astype指定格式
+                y_to_matrix=y_trans.values.astype(int)
+            #2.keras.models Sequential(建立BP模型)  /keras.layers.core Dense(建立层)/Activation(激活函数)
+                from keras.models import Sequential
+                from keras.layers.core import Dense,Activation
+            #3.建立模型Sequential
+                model=Sequential()
+            #4.Dense建立输入层、输出层
+                model.add(Dense(10,input_dim=len(x_to_matrix[0])))#第一个参数是层的个数；input_dim多少特征，
+                model.add(Activation("relu"))#输入层用relu作为激活函数
+                model.add(Dense(1,input_dim=1))#建立输出层
+                model.add(Activation("sigmoid"))#输出层sigmoid作为激活函数
+            #5.compile模型编译
+                model.compile(loss="binary_crossentropy",optimizer="adam",class_mode="binary")
+                #二元分类的损失函数使用binary_crossentropy；求解方式设定为adam;因为二元分类，模式设定为binary
+                #若此例为手写体识别，则loss应为mean_squared_error.
+            #6.fit训练（学习）
+                model.fit(x_to_matrix,y_to_matrix,nb_epoch=1000,batch_size=100)#x对应特征，y对应结果;nb_epoch学习次数设为1000；
+                #Batch Size定义：一次训练所选取的样本数。Batch Size的大小影响模型的优化程度和速度。
+            #7.预测分类
+                rst=model.predict_classes(x).reshape(len(x))#数据进行预测分类，结果长度即为数据的长度
+                m=0
+                for j in range(0,len(x_to_matrix)):
+                    if(rst[i]!=y[i]):
+                        m+=1
+                print("the fault ratio is",1-m/len(x_to_matrix))
+                data_wait=np.array([[1,-1,1,1,],[1,1,1,1],[-1,1,-1,-1]])
+                rst2=model.predict_classes(data_wait)
+                for i in rst2:
+                    print(rst2[i])
