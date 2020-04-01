@@ -1,0 +1,27 @@
+#逻辑回归算法-LR(sklearn.linear_model)
+        #信息的结果是二元的，是或不是。
+        '''
+        对应的因变量只有0和1两种方式。
+        =1，p
+        =0，1-p
+        概率比=p/1-p
+        z=ln(p/(1-p))
+        p=1/(1+e**-z)这即是逻辑回归对应的曲线
+        '''
+        import pandas as pda
+        filename="G:/PM/data_analyse/data_anlysis_materials/dangdang.csv"
+        dataframe=pda.read_csv(filename)
+        x=dataframe.iloc[:,1:4].values#自变量设置为x
+        #iloc[:,1:4]矩阵的切片运算；逗号左边为取哪些行，右边为取哪些列
+        y=dataframe.iloc[:,0:1].values#因变量设置为y
+        from sklearn.linear_model import LogisticRegression as LR#导入逻辑回归模型
+        from sklearn.linear_model import RandomLogisticRegression as RLR#导入随机逻辑回归模型
+        r1=RLR()
+        r1.fit(x,y)#对数据进行训练
+        r1.get_support()#进行特征筛选，取得有效特征
+        print("the valid features are",dataframe.columns[r1.get_support()])
+        transdata=dataframe[dataframe.columns[r1.get_support()]].as_matrix()
+        r2=LR()
+        r2.fit(transdata,y)
+        print("the training is over")
+        print("the correct ratio of the model is",r2.score(x,y))
