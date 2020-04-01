@@ -1,0 +1,36 @@
+#关联分析算法-Apriori算法
+        #算法概述
+            #ALGRORITHM core:某个项集是频繁的，那么它的所有子集也是频繁的。如果一个项集是 非频繁项集，那么它的所有超集也是非频繁项集。
+            我们发现{A,B}这个项集是非频繁的，那么{A,B}这个项集的超集，{A,B,C},{A,B,D}等等也都是非频繁的，这些就都可以忽略不去计算。
+            #关联分析：应用于推荐，预测等
+            支持度（Support）：支持度可以理解为物品当前流行程度
+            支持度 = （包含物品A的记录数量） / （总的记录数量）
+            置信度（Confidence）：置信度是指如果购买物品A，有较大可能购买物品B
+            置信度( A -> B) = （包含物品A和B的记录数量） / （包含 A 的记录数量）
+            提升度（Lift）：提升度指当销售一个物品时，另一个物品销售率会增加多少。
+            提升度( A -> B) = 置信度( A -> B) / (支持度 A)
+        #Apriori算法实现：简单点说，就是先找频繁项集，再根据关联规则找关联物品。
+            Apriori的作用是根据物品间的支持度找出物品中的频繁项集。
+            选择物品间的关联规则也就是要寻找物品之间的潜在关系。要寻找这种关系，有两步，以超市为例
+            1.找出频繁一起出现的物品集的集合，我们称之为频繁项集。比如一个超市的频繁项集可能有{{啤酒,尿布},{鸡蛋,牛奶},{香蕉,苹果}}
+            2.在频繁项集的基础上，使用关联规则算法找出其中物品的关联结果。
+            #one-hot编码
+            首先，需要先将商品进行one-hot编码，编码后用boolean值表示。所谓ont-hot编码呢，直观来说就是有多少个状态就有多少比特，
+            而且只有一个比特为1，其他全为0的一种码制。比如冰淇淋只存在最后一共交易单中，其他交易中都没出现。那冰淇淋就可以用[0,0,0,0,1]
+            来表示.
+        #Aprior算法应用
+            #设置数据集
+                from apriori import *
+                import pandas as pda
+                file="G:/PM/data_analyse/data_anlysis_materials/apriori.xlsx"
+                dataframe=pda.read_excel(file,header=None)#不要表头
+            #one-hot编码
+                lambda_expr=lambda x:pda.Series(1,index=x[pda.notnull(x)])#将不为none的值转化为1
+                #lamda表达式 将pda.Series(1,index=x[pda.notnull(x)])的值赋给x
+                transformed_data=map(lambda_expr,dataframe.values)
+                data=pda.DataFrame(list(transformed_data)).fillna(0)#空值转为0，转换为列表形式
+            #支持度、置信度最小值设定
+                support=0.3
+                confidence=0.5
+            #使用apriori算法计算
+                find_rule(data)
