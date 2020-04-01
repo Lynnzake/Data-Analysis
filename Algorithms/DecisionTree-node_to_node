@@ -1,0 +1,46 @@
+#决策树算法-decision text
+        #DC算法概述
+            决策树常见算法：ID3（着重数据增益），C4.5，CART
+            若信源符号有n种取值：U1…Ui…Un，对应概率为：P1…Pi…Pn，且各种符号的出现彼此独立。
+            这时，信源的平均不确定性应当为单个符号不确定性-logPi的统计平均值（E），可称为信息熵，即
+            H(u)=-（p1*logp1+p2*logp2+……+pn*logpn）式中对数一般取2为底
+        #DC算法应用
+            #导入数据并处理
+                import pandas as pda
+                filename="G:/PM/data_analyse/data_anlysis_materials/decisiontree.xlsx"
+                dataframe=pda.read_excel(filename,encoding="utf-8")
+                x=dataframe.iloc[:,2:6].values#提取第三到第五列数据,并转化为数组values才能进行后续的处理
+                y=dataframe.iloc[:,6:].values#提取第六列数据
+                for i in range(0,len(x)):
+                    for j in range(0,len(x[i])):
+                        thisdata=x[i][j]
+                        if(thisdata=="中年"or thisdata=="青年"or thisdata=="高"or thisdata=="是"or thisdata=="优"):
+                            x[i][j]=int(1)
+                        else:
+                            x[i][j]=int(-1)
+                for i in range(0,len(y)):
+                    thisdata=y[i]
+                    if(thisdata=="买"):
+                        y[i]=int(1)
+                    else:
+                        y[i]=int(0)
+                #容易错的地方：直接训练(此时x,y仍为object格式)
+                #正确的做法：转化好格式，将x,y转化为数据框，然后在转化为数组并指定格式
+                x_trans=pda.DataFrame(x)
+                y_trans=pda.DataFrame(y)
+                x_to_matrix=x_trans.values.astype(int)#astype指定格式
+                y_to_matrix=y_trans.values.astype(int)
+            #建立决策树
+                from sklearn.tree import DecisionTreeClassifier as DTC
+                dtc=DTC(criterion="entropy")#决策树设置为信息熵的模式
+                dtc.fit(x_to_matrix,y_to_matrix)#训练
+            #可视化决策树
+                from sklearn.tree import export_graphviz#导出为图片
+                from sklearn.externals.six import StringIO
+                with open("G:/PM/data_analyse/data_anlysis_materials/dtc.dot","w") as file:
+                    export_graphviz(dtc,feature_names=["age","income","student","reputation"],out_file=file)
+            #直接验证结果
+                import numpy as np
+                data_wait=np.array([[1,-1,1,1,],[1,1,1,1],[-1,1,-1,-1]])
+                result=dtc.predict(data_wait)#预测数据结果
+                print(result)
