@@ -1,0 +1,79 @@
+#聚类算法-Kmeans算法
+        #算法概述
+            聚类三法：（划分（分裂）法、层次分析法、密度分析法）网格法、模型法。
+            Kmeans算法（属于划分法）过程：
+            1.随机选择K个点（k也是K个类）作为中心点C1
+            2.计算各个点到这K个点的距离
+            3.将对应的点聚到与其最近的聚类中心
+            4.重新计算聚类中心C2
+            5.如果两次的聚类中心一样，即C1=C2，则得到聚类结果，否则以C2为起点从第二步重新开始
+        #物品购买分类
+            #读取数据
+                import pandas as pda
+                import numpy as np
+                import matplotlib.pylab as pyl
+                filename="G:/PM/data_analyse/data_anlysis_materials/decisiontree.xlsx"
+                dataframe=pda.read_excel(filename)
+            #one-hot编码
+                x=dataframe.iloc[:,2:6].values
+                for i in range(0,len(x)):
+                    for j in range(0,len(x[i])):
+                        thisdata=x[i][j]
+                        if(thisdata=="中年"or thisdata=="青年"or thisdata=="高"or thisdata=="是"or thisdata=="优"):
+                            x[i][j]=int(1)
+                        else:
+                            x[i][j]=int(-1)
+            #使用Kmeans方法
+                from sklearn.cluster import KMeans
+                from sklearn.cluster import Birch
+                kms=KMeans(n_clusters=4,n_jobs=2,max_iter=50)#聚成几类,几个线程，循环多少次
+                result=kms.fit_predict(x)#进行聚类
+                print(result)
+            #可视化
+                #x代表学生序号，result代表学生类别
+                data_axis=np.arange(0,len(result))#生成一维数据
+                stu_clust=pyl.subplot(1,2,1)
+                pyl.plot(data_axis,result,"o")
+                stu_clust.set_xlabel=(u"类别")
+                stu_clust.set_ylabel=(u"数量")
+                stu_clust.set_title=(u"学生聚类")
+        #通过聚类实现商品的聚类
+            #读取数据
+                import pymysql
+                import re
+                '''
+                conn=pymysql.connect(host="localhost",user="root",passwd="qwezxc8520963",db="dangdang")
+                sql="select price,comment from books limit 50"#读出50个信息
+                pda.read_sql(sql,conn)
+                '''
+                filename2="G:/PM/data_analyse/data_anlysis_materials/dangdang.csv"
+                dataframe2=pda.read_csv(filename2,encoding="gbk")
+                x2=dataframe2.iloc[:,2:3].values
+            #处理数据
+                pat="([0-9]*?)条评论"
+                #print(x2)
+                for i in range(1,len(x2)):
+                    comments_with_words=str(x2[i])
+                    comments_with_digital=re.compile(pat).findall(comments_with_words)
+                    x2[i]=comments_with_digital
+                #for i in range(1,len(x2)):
+                #    print(x2[i])
+                #x2 = np.concatenate(x2, axis=0) #矩阵的列没有对齐，出现错误：setting an array element with a sequence.
+            #聚类
+                kms2=KMeans(n_clusters=3,n_jobs=2)#聚成几类,几个线程，循环多少次
+                try:
+                    result2=kms2.fit_predict(x2)#进行聚类
+                    print(result2)
+                    data_axis=np.arange(0,len(result2))#生成一维数据
+                    data_axis=list(map(int,np.array(data_axis)))
+                    pyl.subplot(1,2,2)
+                    for i in range(0,len(result2)):
+                        if(result2[i]==0):
+                            pyl.plot(data_axis,dataframe2.iloc[i:i+1,2:3].values,"*r")
+                        elif(result2[i]==1):
+                            pyl.plot(data_axis,dataframe2.iloc[i:i+1,2:3].values,"*b")
+                        elif(result2[i]==2):
+                            pyl.plot(data_axis,dataframe2.iloc[i:i+1,2:3].values,"*y")
+                    pyl.show()
+                except Exception as err:
+                    print("the error is",err)
