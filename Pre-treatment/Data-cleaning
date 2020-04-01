@@ -1,0 +1,47 @@
+1.缺失值处理（通过describe与len直接发现，通过0数据发现
+        2.异常值处理（通过散点图发现）
+        一般遇到缺失值，处理方式为（删除，插补，不处理）；
+        插补的方式主要有：均值插补、中位数插补、众数插补、固定值插补、最近数据插补、
+        回归插补、拉格朗日插补、牛顿插值法、分段插值等等
+        遇到异常值，一般处理方式为视为缺失值、删除、修补（平均数、中位数等等）、不处理
+        #导入数据
+        import pymysql
+        import numpy as np
+        import pandas as pda
+        import matplotlib.pylab as pyl
+        conn=pymysql.connect(host='localhost',user='root',passwd='qwezxc8520963',db='snacks')
+        sql="select * from snacks"
+        data=pda.read_sql(sql,conn)
+        print(data.describe())
+        #数据清洗
+        #发现缺失值
+        data["price"][(data["price"]==0)]=None#将所有价格为0的数据设置为空值None,把整个表看作二维数组
+        x=0#记录设置为中位数的数据条数
+        for i in data.columns:#获取所有表头名然后遍历
+            for j in range(len(data)):
+                if (data[i].isnull())[j]: #如果为空即插值。  
+                    data[i][j]="36"#将值为null的数据设置为数据的中位数36
+                    x+=1
+        print(x)
+        #异常值处理
+        #画散点图（横轴为价格，纵轴为评论数）
+        #价格
+        data2=data.T
+        data2=data2.sort(data2[2])
+        price=data2.values[2]
+        #评论数
+        comment=data2.values[3]
+        pyl.plot(price,comment,'o')
+        pyl.show()
+        #评论数异常>200000,价格异常>2000
+        line=len(data.values)
+        col=len(data.values[0])
+        da=data.values
+        for i in range(0,line):
+            for j in range(0,col):
+                if(da[i][2]>2000):#价格异常
+                    print(da[i][j])#查看异常数据
+                    da[i][2]=36#中位数更为合适
+                if(da[i][3]>200000):
+                    print(da[i][j])
+                    da[i][3]=58
