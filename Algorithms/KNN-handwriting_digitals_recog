@@ -1,0 +1,94 @@
+#K最邻近算法-KNN
+        #算法实现
+            from numpy import * #导入numpy的所有东西
+            import operator
+            #处理数据
+            def knn(k,testdata,traindata,labels):#labels类别名
+                traindatasize=traindata.shape[0]#shape[0]查看矩阵第一维（行）的长度，shape[1]查看矩阵第二维（列）的长度
+            #导入numpy的所有东西
+                dif=tile(testdata,(traindatasize,1))-traindata
+                #tile(参数1，(参数2，参数3))
+                #参数1：将要变化的数据，参数2：需要加倍的行数或列数，参数3：1代表行加倍，2代表列加倍。
+            #计算欧几里得距离
+                sqdif=dif**2
+                sumsqdif=sqdif.sum(axis=1)
+                distance=sumsqdif**0.5
+            #根据距离进行分类
+                count={}
+                sortdistance=distance.argsort()#对计算出来的距离按升序排序
+                for i in range(0,k):
+                    vote=labels[sortdistance[i]]
+                    count[vote]=count.get(vote,0)+1#字典下的get(参数1，参数2),参数1代表字典里的值，参数2表示从多少开始计数
+                    #如苹果：5,草莓：4
+                sortedcount=sorted(count.items(),key=operator.itemgetter(1),reverse=True)#降序排列
+                #此处第1个域代表次数；若为operator.itemgetter(0)，则代表水果的种类
+                '''
+                >>>a=[1,2,3]
+                >>>b=operator.itemgetter(1)#获取对象的第一个域的值
+                >>>b(a)
+                    2
+                '''
+                return sortedcount[0][0]#k个邻近元素中排列第一的即为测试数据的类别
+        #KNN算法进行手写体数字识别
+            #处理图片，将图片转化为文本形式
+                #先将所有图片转化为固定宽高,此处图片皆为50*50
+                #pillow模块
+                from PIL import Image
+                img=Image.open("G:/PM/data_analyse/testdata/7.png")
+                img_to_txt=open("G:/PM/data_analyse/testdata/7.txt","a")
+                #img.save("G:/PM/netcrawler_learning/7.png")#保存图片
+                width=img.size[0]
+                height=img.size[1]
+                #k=img.getpixel((1,9))#获取像素点（1，9）的颜色
+                #RGB：(0,0,0)black;(255,255,255)white
+                #print(k)
+                for i in range(0,height):#高在外层循环
+                    for j in range(0,width):
+                        clor=img.getpixel((j,i))#注意genpixel参数顺序与循环的匹配(宽，高)
+                        clorall=clor[0]+clor[1]+clor[2]
+                        if clorall==0:
+                            img_to_txt.write("1")#若为黑色，写入1
+                        else:
+                            img_to_txt.write("0")
+                    img_to_txt.write("\n")#换行
+                img_to_txt.close()
+
+            #加载数据
+                def data_to_array(filename):
+                    arr=[]
+                    fh=open(filename)
+                    for i in range(0,height):
+                        thisline=fh.readline()
+                        for j in range(0,width):
+                            arr.append(int(thisline[j]))#int(thisline[j])强制转化成int型
+                    return arr
+            #去文件名前缀
+                def seplables(filename):
+                    filestr=filename.split(".")[0]#取前半部分内容
+                    file_label=int(filestr.split("_")[0])
+                    return file_label
+            #建立训练数据-listdir方法
+                from os import listdir
+                def traindata():
+                    labels=[]
+                    train_file_list=listdir("G:/PM/data_analyse/traindata")#os下的listdir()得到一个文件夹下的所有文件名
+                    train_file_count=len(train_file_list)
+                    #数据转化为数组后，长度为宽*高
+                    #将所有的测试文件用数组保存，行：测试文件总数；列：宽*高
+                    trainarr=np.zeros(train_file_count,width*height)#使用numpy下的zeros方法生成二维数组
+                    for i in range(0,train_file_count):
+                        thisfile=train_file_list[i]#得到文件名
+                        thislabel=seplables[thisfile]#分割文件名得到数字名
+                        labels.append(thislabel)
+                        trainarr[i,:]=data_to_array("./thisfile")#相应文件转化为数组保存到训练数组中[i,:]保证数据不会串行
+                    return trainarr,labels
+            #用测试数据调用KNN算法去调试，看是否能够准确识别
+                def datatest():
+                    trainarr,labels=traindata()
+                    test_file_list=listdir("G:/PM/data_analyse/testdata")
+                    test_file_count=len(test_file_list)
+                    for i in range(0,test_file_count):
+                        this_test_file=test_file_list[i]
+                        test_dataarr=data_to_array("./this_test_file")
+                        result_knn=knn(3,test_dataarr,trainarr,labels)
+                        print("the"+i+"file is",result_knn)
